@@ -37,3 +37,12 @@ if [ $0:h/fasd -nt $_FASD_INIT_CACHE -o ! -s $_FASD_INIT_CACHE ]; then
       >| $_FASD_INIT_CACHE
 fi
 source $_FASD_INIT_CACHE
+
+function fasd_cd {
+  local fasd_ret="$(fasd -d "$@")"
+  if [[ -d "$fasd_ret" ]]; then
+    cd "$fasd_ret"
+  else
+    print "$fasd_ret"
+  fi
+}
