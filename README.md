@@ -381,4 +381,3 @@ _FASD_SINK="$HOME/.fasd.log"
 Fasd is originally written based on code from [z](https://github.com/rupa/z) by
 rupa deadwyler under the WTFPL license. Most if not all of the code has been
 rewritten. Fasd is licensed under the "MIT/X11" license.
-
