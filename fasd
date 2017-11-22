@@ -27,6 +27,19 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+get_vcs() {
+    local begin_path=$1
+    cd begin_path
+    while [ "$PWD" != "/" ]; do
+        if { [ -d .git ] || [ -d .hg ] ;} then
+            echo $PWD
+            return
+        fi
+        cd ..
+    done
+    echo "$begin_path"
+}
+
 fasd() {
 
   # make zsh do word splitting inside this function
@@ -74,6 +87,7 @@ fasd() {
           [ -z "$_FASD_FUZZY" ] && _FASD_FUZZY=2
           [ -z "$_FASD_VIMINFO" ] && _FASD_VIMINFO="$HOME/.viminfo"
           [ -z "$_FASD_RESOLVE_SYMLINKS" ] && _FASD_RESOLVE_SYMLINKS=0
+          [ -z "$_FASD_ONLY_VCS" ] && _FASD_ONLY_VCS=1
           [ -z "$_FASD_RECENTLY_USED_XBEL" ] && \
             _FASD_RECENTLY_USED_XBEL="$HOME/.local/share/recently-used.xbel"
           [ -z "$_FASD_NOCASE" ] && _FASD_NOCASE=0
@@ -359,6 +373,7 @@ EOS
     # add current pwd if the option is set
     local pwd="$PWD"
     [ $_FASD_RESOLVE_SYMLINKS = 1 ] && pwd="$(readlink -f "$pwd")"
+    [ $_FASD_ONLY_VCS = 1 ] && pwd="$(get_vcs $pwd)"
     [ "$_FASD_TRACK_PWD" = 1 -a "$PWD" != "$HOME" ] && paths="$paths|$pwd"
 
     [ -z "${paths##\|}" ] && return # stop if we have nothing to add
