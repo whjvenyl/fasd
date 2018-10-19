@@ -29,7 +29,7 @@
 
 get_vcs() {
     local begin_path=$1
-    cd begin_path
+    cd "$begin_path"
     while [ "$PWD" != "/" ]; do
         if { [ -d .git ] || [ -d .hg ] ;} then
             echo $PWD
