@@ -293,8 +293,8 @@ things in vim
 ```
 
 You can define your own backend by declaring a function by that name in your
-`.fasdrc`. You can set default backend with `_FASD_BACKENDS` variable in our
-`.fasdrc`.
+[config file](#tweaks). You can set default backend with `_FASD_BACKENDS` variable in
+our [config file](#tweaks).
 
 Fasd can mimic [v](http://github.com/rupa/v)'s behavior by this alias:
 
@@ -305,7 +305,7 @@ alias v='f -t -e vim -b viminfo'
 # Tweaks
 
 Some shell variables that you can set before sourcing `fasd`. You can set them
-in `$HOME/.fasdrc`
+in `$HOME/.config/fasd/config`
 
 ```
 $_FASD_DATA
@@ -370,7 +370,7 @@ If fasd does not work as expected, please file a bug report describing the
 unexpected behavior along with your OS version, shell version, awk version, sed
 version, and a log file.
 
-You can set `_FASD_SINK` in your `.fasdrc` to obtain a log.
+You can set `_FASD_SINK` in your [config file](#tweaks) to obtain a log.
 
 ```sh
 _FASD_SINK="$HOME/.fasd.log"
