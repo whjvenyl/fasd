@@ -373,7 +373,7 @@ EOS
     # add current pwd if the option is set
     local pwd="$PWD"
     [ $_FASD_RESOLVE_SYMLINKS = 1 ] && pwd="$(readlink -f "$pwd")"
-    [ $_FASD_ONLY_VCS = 1 ] && pwd="$(get_vcs $pwd)"
+    [ $_FASD_ONLY_VCS = 1 ] && pwd="$(get_vcs "$pwd")"
     [ "$_FASD_TRACK_PWD" = 1 -a "$PWD" != "$HOME" ] && paths="$paths|$pwd"
 
     [ -z "${paths##\|}" ] && return # stop if we have nothing to add
