@@ -56,15 +56,13 @@ cp `f mov` .
 
 # Install
 
-Fasd is available in various package managers. Please check
+The upstream version of `fasd` is available in various package managers. Please check
 [the wiki page](https://github.com/clvv/fasd/wiki/Installing-via-Package-Managers)
 for an up-to-date list.
 
 You can also manually obtain a copy of fasd.
 
-Download fasd 1.0.2 from GitHub:
-[zip](https://github.com/whjvenyl/fasd/zipball/1.0.2),
-[tar.gz](https://github.com/whjvenyl/fasd/tarball/1.0.2).
+    git clone git@github.com:whjvenyl/fasd.git
 
 Fasd is a self-contained POSIX shell script that can be either sourced or
 executed. A Makefile is provided to install `fasd` and `fasd.1` to desired
