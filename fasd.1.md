@@ -252,7 +252,7 @@ Below are the available variables you can set:
     "$HOME/.local/share/recently-used.xbel"
 
     $_FASD_NOCASE
-    Force case insensitivity for default matching with value 1, defaults to 0.
+    If set to any non-empty string, fasd will ignore case when matching.
 
 
 # DEBUGGING
