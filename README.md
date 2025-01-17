@@ -307,7 +307,8 @@ in `$HOME/.config/fasd/config`
 
 ```
 $_FASD_DATA
-Path to the fasd data file, default "$HOME/.fasd".
+Path to the fasd data file, default "$XDG_CACHE_HOME/fasd" or
+"$HOME/.cache/fasd" if $XDG_CACHE_HOME is not set.
 
 $_FASD_BLACKLIST
 List of blacklisted strings. Commands matching them will not be processed.
@@ -359,7 +360,7 @@ Path to XDG recently-used.xbel file for recently-used backend, defaults to
 "$HOME/.local/share/recently-used.xbel"
 
 $_FASD_NOCASE
-Force case insensitivity for default matching with value 1, defaults to 0.
+If set to any non-empty string, fasd will ignore case when matching.
 ```
 
 # Debugging
