@@ -4,9 +4,8 @@ MANDIR?= ${PREFIX}/share/man
 INSTALL?= install
 INSTALLDIR= ${INSTALL} -d
 INSTALLBIN= ${INSTALL} -p -m 755
-INSTALLMAN= ${INSTALL} -p -m 644
 
-all: fasd.1
+all:
 
 uninstall:
 	rm -f ${DESTDIR}${BINDIR}/fasd
@@ -15,13 +14,5 @@ uninstall:
 install:
 	${INSTALLDIR} ${DESTDIR}${BINDIR}
 	${INSTALLBIN} fasd ${DESTDIR}${BINDIR}
-	${INSTALLDIR} ${DESTDIR}${MANDIR}/man1
-	${INSTALLMAN} fasd.1 ${DESTDIR}${MANDIR}/man1
 
-man: fasd.1
-
-fasd.1: fasd.1.md
-	pandoc -s -w man fasd.1.md -o fasd.1
-
-.PHONY: all install uninstall man
-
+.PHONY: all install uninstall
