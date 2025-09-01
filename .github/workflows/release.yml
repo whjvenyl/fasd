@@ -1,0 +1,71 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags like v1.0.5, v2.0.0, etc.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Get tag name
+      id: get_tag
+      run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+    - name: Create release archive
+      run: |
+        # Extract version without 'v' prefix
+        VERSION=${GITHUB_REF#refs/tags/v}
+        
+        # Create a clean directory for the release
+        mkdir -p fasd-${VERSION}
+        
+        # Copy main files to the release directory
+        cp fasd fasd-${VERSION}/
+        cp README.md fasd-${VERSION}/
+        cp LICENSE fasd-${VERSION}/
+        cp Makefile fasd-${VERSION}/
+        cp fasd.plugin.zsh fasd-${VERSION}/
+        cp -r fasd.plugin fasd-${VERSION}/
+        
+        # Create tarball
+        tar -czf fasd-${VERSION}.tar.gz fasd-${VERSION}/
+        
+        # Create zip archive
+        zip -r fasd-${VERSION}.zip fasd-${VERSION}/
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get_tag.outputs.TAG_NAME }}
+        name: Release ${{ steps.get_tag.outputs.TAG_NAME }}
+        body: |
+          ## What's Changed
+          
+          Fasd ${{ steps.get_tag.outputs.TAG_NAME }} release.
+          
+          ### Installation
+          
+          **Using the release archive:**
+          1. Download and extract one of the archives below
+          2. Run `make install` or copy the `fasd` script to a directory in your `$PATH`
+          3. Add `eval "$(fasd --init auto)"` to your shell configuration file
+          
+          **Direct download:**
+          ```bash
+          curl -o fasd https://github.com/whjvenyl/fasd/releases/download/${{ steps.get_tag.outputs.TAG_NAME }}/fasd
+          chmod +x fasd
+          ```
+          
+          For more installation and usage instructions, see the [README](https://github.com/whjvenyl/fasd/blob/master/README.md).
+        draft: false
+        prerelease: false
+        files: |
+          fasd
+          fasd-*.tar.gz
+          fasd-*.zip

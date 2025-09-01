@@ -60,7 +60,12 @@ The upstream version of `fasd` is available in various package managers. Please 
 [the wiki page](https://github.com/clvv/fasd/wiki/Installing-via-Package-Managers)
 for an up-to-date list.
 
-You can also manually obtain a copy of fasd.
+You can also obtain a copy of fasd from the [releases page](https://github.com/whjvenyl/fasd/releases):
+
+    curl -L -o fasd https://github.com/whjvenyl/fasd/releases/latest/download/fasd
+    chmod +x fasd
+
+Or clone the repository:
 
     git clone git@github.com:whjvenyl/fasd.git
 
