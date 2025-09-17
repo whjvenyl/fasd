@@ -1,0 +1,57 @@
+# Fasd-specific temporary and cache files
+*.??????  # mktemp generated files (6 random chars)
+.fasd-*
+/fasd-test
+/test-fasd*
+
+# Editor temporary files
+*~
+*.swp
+*.swo
+*.tmp
+.*.tmp
+.viminfo
+.vim/
+.emacs.d/
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-*
+.atom/
+
+# Build and installation test artifacts
+/tmp/
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+
+# Cache and log files
+*.log
+*.cache
+.cache/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Shell session files
+.bash_history
+.zsh_history
+.history
+
+# Package manager artifacts (if used for testing)
+node_modules/
+.npm/
