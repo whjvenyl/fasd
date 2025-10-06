@@ -11,19 +11,19 @@ The project uses GitHub Actions to automatically create releases when version ta
 1. **Update the version** in the fasd script if needed:
    ```bash
    # Edit the version in the fasd script (currently line 564)
-   sed -i 's/echo "1\.0\.4"/echo "1.0.5"/' fasd
+   sed -i 's/echo "2\.0\.0"/echo "2.0.1"/' fasd
    ```
 
 2. **Commit the version change** (if any):
    ```bash
    git add fasd
-   git commit -m "Bump version to 1.0.5"
+   git commit -m "Bump version to 2.0.1"
    ```
 
 3. **Create and push a version tag**:
    ```bash
-   git tag v1.0.5
-   git push origin v1.0.5
+   git tag v2.0.1
+   git push origin v2.0.1
    ```
 
 4. **GitHub Actions will automatically**:
@@ -52,7 +52,7 @@ If the automated process fails, you can create releases manually:
 
 1. Go to [Releases page](https://github.com/whjvenyl/fasd/releases)
 2. Click "Create a new release"
-3. Choose or create a tag (e.g., `v1.0.5`)
+3. Choose or create a tag (e.g., `v2.0.1`)
 4. Add release notes
 5. Upload the necessary files
 
