@@ -28,14 +28,14 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 get_vcs() {
-    local begin_path=$1
-    cd "$begin_path"
+    local begin_path="$1"
+    cd "$begin_path" || return 1
     while [ "$PWD" != "/" ]; do
         if { [ -d .git ] || [ -d .hg ] ;} then
-            echo $PWD
+            echo "$PWD"
             return
         fi
-        cd ..
+        cd .. || return 1
     done
     echo "$begin_path"
 }
@@ -94,7 +94,7 @@ fasd() {
           if [ -z "$_FASD_AWK" ]; then
             # awk preferences
             local awk; for awk in mawk gawk original-awk nawk awk; do
-              $awk "" && _FASD_AWK=$awk && break
+              $awk 'BEGIN{exit}' < /dev/null && _FASD_AWK=$awk && break
             done
           fi
         } >> "${_FASD_SINK:-/dev/null}" 2>&1
@@ -487,7 +487,7 @@ $(fasd --backend $each)"
           [ "$_ret" ] && _fasd_data="$_ret" || _fasd_data=
         fi
       fi
-    else # no query arugments
+    else # no query arguments
       _fasd_data="$(printf %s\\n "$_fasd_data" | while read -r line; do
         [ -${typ:-e} "${line%%\|*}" ] && printf %s\\n "$line"
       done)"
@@ -542,7 +542,7 @@ $(fasd --backend $each)"
         ;;
       current)
         for path in *; do
-          printf "$PWD/%s|1\\n" "$path"
+          printf "%s/%s|1\\n" "$PWD" "$path"
         done
         ;;
       spotlight)
