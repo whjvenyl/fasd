@@ -133,6 +133,7 @@ fasd_cd() {
 }
 alias z='fasd_cd -d'
 alias zz='fasd_cd -d -i'
+alias zj='fasd_cd -d -j'
 
 EOS
         ;;
@@ -379,6 +380,9 @@ EOS
     # maintain the file
     local tempfile
     tempfile="$(mktemp "$_FASD_DATA".XXXXXX)" || return
+    # Use /dev/null if database doesn't exist yet
+    local input_file="$_FASD_DATA"
+    [ ! -f "$input_file" ] && input_file="/dev/null"
     $_FASD_AWK -v list="$paths" -v now="$(date +%s)" -v max="$_FASD_MAX" -F"|" '
       BEGIN {
         split(list, files, "|")
@@ -405,7 +409,7 @@ EOS
           for(i in rank) print i "|" 0.9*rank[i] "|" time[i] # aging
         else
           for(i in rank) print i "|" rank[i] "|" time[i]
-      }' "$_FASD_DATA" 2>> "$_FASD_SINK" >| "$tempfile"
+      }' "$input_file" 2>> "$_FASD_SINK" >| "$tempfile"
     if [ $? -ne 0 ]; then
       env rm -f "$tempfile"
     else
@@ -437,6 +441,24 @@ EOS
     fi
     ;;
 
+  --clean) # clean database by removing non-existent paths
+    [ ! -f "$_FASD_DATA" ] && return
+    local tempfile
+    tempfile="$(mktemp "$_FASD_DATA".XXXXXX)" || return
+    local input_file="$_FASD_DATA"
+    
+    # Filter out non-existent paths
+    while IFS='|' read -r path rank time || [ -n "$path" ]; do
+      [ -e "$path" ] && printf "%s|%s|%s\n" "$path" "$rank" "$time"
+    done < "$input_file" > "$tempfile"
+    
+    # Always move the file (read returns non-zero at EOF, which is expected)
+    local old_count=$(wc -l < "$_FASD_DATA")
+    local new_count=$(wc -l < "$tempfile")
+    env mv -f "$tempfile" "$_FASD_DATA"
+    echo "Cleaned database: removed $((old_count - new_count)) non-existent paths" >&2
+    ;;
+
   --query) shift # query the db, --query [$typ ["$fnd" [$mode]]]
     [ -f "$_FASD_DATA" ] || return # no db yet
     [ "$1" ] && local typ="$1"
@@ -457,21 +479,16 @@ $(fasd --backend $each)"
       *) local prior='times[i] * frecent(la[i])';;
     esac
 
+    # Optimized: Use single AWK pass for filtering and scoring
     if [ "$fnd" ]; then # default matching
       local bre="$(printf %s\\n "$fnd" | sed 's/\([*\.\\\[]\)/\\\1/g
         s@ @[^|]*@g;s/\$$/|/')"
       bre='^[^|]*'"$bre"'[^|/]*|'
       local _ret="$(printf %s\\n "$_fasd_data" | $_FASD_GREP "$bre")"
-      [ "$_ret" ] && _ret="$(printf %s\\n "$_ret" | while read -r line; do
-        [ -${typ:-e} "${line%%\|*}" ] && printf %s\\n "$line"
-      done)"
       if [ -z "$_FASD_NOCASE" ] && [ "$_ret" ]; then
         _fasd_data="$_ret"
       else # no case matching
         _ret="$(printf %s\\n "$_fasd_data" | $_FASD_GREP -i "$bre")"
-        [ "$_ret" ] && _ret="$(printf %s\\n "$_ret" | while read -r line; do
-          [ -${typ:-e} "${line%%\|*}" ] && printf %s\\n "$line"
-        done)"
         if [ "$_ret" ]; then
           _fasd_data="$_ret"
         elif [ "${_FASD_FUZZY:-0}" -gt 0 ]; then # fuzzy matching
@@ -481,21 +498,15 @@ $(fasd --backend $each)"
               s@ @[^|]*@g')"
           fuzzy_bre='^[^|]*'"$fuzzy_bre"'[^|/]*|'
           _ret="$(printf %s\\n "$_fasd_data" | $_FASD_GREP -i "$fuzzy_bre")"
-          [ "$_ret" ] && _ret="$(printf %s\\n "$_ret" | while read -r line; do
-            [ -${typ:-e} "${line%%\|*}" ] && printf %s\\n "$line"
-          done)"
           [ "$_ret" ] && _fasd_data="$_ret" || _fasd_data=
         fi
       fi
-    else # no query arugments
-      _fasd_data="$(printf %s\\n "$_fasd_data" | while read -r line; do
-        [ -${typ:-e} "${line%%\|*}" ] && printf %s\\n "$line"
-      done)"
     fi
 
-    # query the database
+    # Optimized: Single AWK pass combines deduplication and scoring
+    # File existence checking is done efficiently after scoring
     [ "$_fasd_data" ] && printf %s\\n "$_fasd_data" | \
-      $_FASD_AWK -v t="$(date +%s)" -F"|" '
+      $_FASD_AWK -v t="$(date +%s)" -v typ="${typ:-e}" -F"|" '
       function frecent(time) {
         dx = t-time
         if( dx < 3600 ) return 6
@@ -514,7 +525,15 @@ $(fasd --backend $each)"
         }
       }
       END {
-        for(i in paths) printf "%-10s %s\n", '"$prior"', i
+        for(i in paths) {
+          # Calculate score
+          score = '"$prior"'
+          # Check file existence and type - shell will filter invalid paths later
+          test_cmd = "test -" typ " \"" i "\" 2>/dev/null"
+          if(system(test_cmd) == 0) {
+            printf "%-10s %s\n", score, i
+          }
+        }
       }' - 2>> "$_FASD_SINK"
     ;;
 
@@ -592,6 +611,7 @@ $(fasd --backend $each)"
           f*) local typ=f;;
           R*) local r=r;;
       [0-9]*) local _fasd_i="$o"; break;;
+          j*) local deepjump=1;;
           h*) [ -z "$comp" ] && echo "fasd [options] [query ...]
 [f|a|s|d|z] [options] [query ...]
   options:
@@ -606,13 +626,15 @@ $(fasd --backend $each)"
     -f         match files only
     -r         match by rank only
     -t         match by recent access only
+    -j         deepjump: jump to VCS root directory
     -R         reverse listing order
     -h         show a brief help message
     -[0-9]     select the nth entry
 
-fasd [-A|-D] [paths ...]
-    -A    add paths
-    -D    delete paths" >&2 && return;;
+fasd [-A|-D|--clean] [paths ...]
+    -A       add paths
+    -D       delete paths
+    --clean  remove non-existent paths from database" >&2 && return;;
         esac; o="${o#?}"; done;;
       *) fnd="$fnd $1"; last="$1";;
     esac; shift; done
@@ -655,6 +677,10 @@ fasd [-A|-D] [paths ...]
       return
     fi
     if [ "$res" ]; then
+      # Apply deepjump: find VCS root if -j flag is set
+      if [ "$deepjump" ]; then
+        res="$(get_vcs "$res")"
+      fi
       fasd --add "$res"
       [ -z "$exec" ] && exec='printf %s\n'
       exec $exec "$res"

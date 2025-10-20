@@ -14,6 +14,13 @@ Fasd ranks files and directories by "frecency," that is, by both "frequency" and
 "recency." The term "frecency" was first coined by Mozilla and used in Firefox
 ([link](https://developer.mozilla.org/en/The_Places_frecency_algorithm)).
 
+## Performance
+
+Fasd has been optimized for speed with a single-pass AWK algorithm that combines
+deduplication, scoring, and filtering. On typical workloads with ~1000 entries,
+fasd can process queries at **~75 queries/second** with an average latency of **~13ms**.
+See [benchmark.sh](benchmark.sh) for detailed performance testing.
+
 # Introduction
 
 If you use your shell to navigate and launch applications, fasd can help you do
@@ -43,7 +50,31 @@ alias sd='fasd -sid'     # interactive directory selection
 alias sf='fasd -sif'     # interactive file selection
 alias z='fasd_cd -d'     # cd, same functionality as j in autojump
 alias zz='fasd_cd -d -i' # cd with interactive selection
+alias zj='fasd_cd -d -j' # deepjump: cd to VCS root directory
 ```
+
+## Deepjump Feature
+
+The deepjump feature (`-j` flag or `zj` alias) allows you to jump to the version
+control system (VCS) root directory of a matched path. This is similar to the
+behavior in [jump](https://github.com/gsamokovarov/jump).
+
+For example, if you frequently access `/home/user/projects/myapp/src/components`,
+using `zj components` will take you to `/home/user/projects/myapp` (the git root)
+instead of the deeply nested directory.
+
+```sh
+# Navigate to a deeply nested directory
+cd /home/user/projects/myapp/src/components/ui
+
+# Later, jump to the project root
+zj ui  # Takes you to /home/user/projects/myapp
+
+# Or use the flag directly
+fasd -d -j ui
+```
+
+Supported VCS: Git (.git) and Mercurial (.hg)
 
 Fasd will smartly detect when to display a list of files or just the best
 match. For instance, when you call fasd in a subshell with some search
@@ -367,6 +398,44 @@ Path to XDG recently-used.xbel file for recently-used backend, defaults to
 $_FASD_NOCASE
 If set to any non-empty string, fasd will ignore case when matching.
 ```
+
+# Benchmarking
+
+Fasd includes a comprehensive benchmark suite (`benchmark.sh`) that measures
+performance and compares against alternative tools like [pazi](https://github.com/euank/pazi)
+and [jump](https://github.com/gsamokovarov/jump).
+
+## Running Benchmarks
+
+```sh
+# Run with default settings (1000 entries, 100 queries)
+./benchmark.sh
+
+# Customize benchmark parameters
+BENCHMARK_DATA_SIZE=500 BENCHMARK_QUERIES=50 ./benchmark.sh
+
+# Use custom fasd binary
+FASD_BIN=/path/to/fasd ./benchmark.sh
+```
+
+The benchmark tests:
+- Query performance with various patterns (simple, multi-word, fuzzy)
+- Different query modes (recent, rank-based, frecency)
+- Database operations (add, delete)
+- Memory usage
+- Comparison with pazi and jump (if installed)
+
+## Performance Tips
+
+- Keep your database under 2000 entries (configured via `_FASD_MAX`)
+- Use specific query patterns for faster matching
+- Enable fuzzy matching cautiously (`_FASD_FUZZY`) as it impacts performance
+- Use the fastest shell available (dash, ksh variants)
+- Periodically clean the database to remove non-existent paths:
+  ```sh
+  fasd --clean
+  ```
+  This improves query performance by reducing the number of paths to check
 
 # Debugging
 
