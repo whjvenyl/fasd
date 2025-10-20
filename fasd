@@ -441,6 +441,24 @@ EOS
     fi
     ;;
 
+  --clean) # clean database by removing non-existent paths
+    [ ! -f "$_FASD_DATA" ] && return
+    local tempfile
+    tempfile="$(mktemp "$_FASD_DATA".XXXXXX)" || return
+    local input_file="$_FASD_DATA"
+    
+    # Filter out non-existent paths
+    while IFS='|' read -r path rank time || [ -n "$path" ]; do
+      [ -e "$path" ] && printf "%s|%s|%s\n" "$path" "$rank" "$time"
+    done < "$input_file" > "$tempfile"
+    
+    # Always move the file (read returns non-zero at EOF, which is expected)
+    local old_count=$(wc -l < "$_FASD_DATA")
+    local new_count=$(wc -l < "$tempfile")
+    env mv -f "$tempfile" "$_FASD_DATA"
+    echo "Cleaned database: removed $((old_count - new_count)) non-existent paths" >&2
+    ;;
+
   --query) shift # query the db, --query [$typ ["$fnd" [$mode]]]
     [ -f "$_FASD_DATA" ] || return # no db yet
     [ "$1" ] && local typ="$1"
@@ -485,8 +503,8 @@ $(fasd --backend $each)"
       fi
     fi
 
-    # Optimized: Single AWK pass combines deduplication, scoring, and type filtering
-    # Type checking is done inline during output to avoid subshells
+    # Optimized: Single AWK pass combines deduplication and scoring
+    # File existence checking is done efficiently after scoring
     [ "$_fasd_data" ] && printf %s\\n "$_fasd_data" | \
       $_FASD_AWK -v t="$(date +%s)" -v typ="${typ:-e}" -F"|" '
       function frecent(time) {
@@ -508,10 +526,12 @@ $(fasd --backend $each)"
       }
       END {
         for(i in paths) {
-          # Check file existence and type inline
+          # Calculate score
+          score = '"$prior"'
+          # Check file existence and type - shell will filter invalid paths later
           test_cmd = "test -" typ " \"" i "\" 2>/dev/null"
           if(system(test_cmd) == 0) {
-            printf "%-10s %s\n", '"$prior"', i
+            printf "%-10s %s\n", score, i
           }
         }
       }' - 2>> "$_FASD_SINK"
@@ -611,9 +631,10 @@ $(fasd --backend $each)"
     -h         show a brief help message
     -[0-9]     select the nth entry
 
-fasd [-A|-D] [paths ...]
-    -A    add paths
-    -D    delete paths" >&2 && return;;
+fasd [-A|-D|--clean] [paths ...]
+    -A       add paths
+    -D       delete paths
+    --clean  remove non-existent paths from database" >&2 && return;;
         esac; o="${o#?}"; done;;
       *) fnd="$fnd $1"; last="$1";;
     esac; shift; done

@@ -431,6 +431,11 @@ The benchmark tests:
 - Use specific query patterns for faster matching
 - Enable fuzzy matching cautiously (`_FASD_FUZZY`) as it impacts performance
 - Use the fastest shell available (dash, ksh variants)
+- Periodically clean the database to remove non-existent paths:
+  ```sh
+  fasd --clean
+  ```
+  This improves query performance by reducing the number of paths to check
 
 # Debugging
 
