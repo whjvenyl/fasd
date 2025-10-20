@@ -174,6 +174,67 @@ completion work. For instance:
 
 You could select an entry in the list of matching files.
 
+# Advanced Features
+
+## Pin Directories
+
+Fasd allows you to pin directories with specific terms for instant access, similar to bookmarks. Pinned directories always have the highest priority when matching.
+
+```sh
+# Pin current directory
+fasd --pin myproject
+
+# Pin a specific directory
+fasd --pin work ~/workspace/important-project
+
+# Jump to pinned directory
+z work              # instantly jumps to ~/workspace/important-project
+
+# List all pins
+fasd -P
+
+# Remove a pin
+fasd --unpin work
+```
+
+Pins are especially useful when you have:
+- Multiple directories with similar names
+- Frequently accessed directories that you want instant access to
+- Projects that you want to prioritize over other matches
+
+## Deep Jump
+
+Deep jump allows you to navigate to nested directories using space-separated terms that match path components. This makes it easier to jump to deeply nested directories without typing the full path.
+
+```sh
+# Traditional way - matches only last component
+z config            # matches /path/to/config
+
+# Deep jump - matches nested paths
+z project config    # matches /path/to/project/config
+z app src           # matches /path/to/app/src
+z receipt app       # matches /path/to/receipt/app
+```
+
+When you use multiple space-separated terms, fasd first tries to match them as path components separated by slashes. If no match is found, it falls back to the traditional matching behavior.
+
+## Reverse Jump
+
+Use the `-R` flag to reverse the listing order, showing least-used (or least recently used) directories first instead of the most-used ones.
+
+```sh
+# Normal order (most frecent first)
+fasd -d project
+
+# Reverse order (least frecent first)
+fasd -d -R project
+```
+
+This is useful for:
+- Finding directories you haven't visited in a while
+- Cleaning up old project directories
+- Discovering forgotten paths in your history
+
 # Matching
 
 Fasd has three matching modes: default, case-insensitive, and fuzzy.
@@ -233,12 +294,17 @@ busybox ash, FreeBSD 9 /bin/sh and OpenBSD /bin/sh.
         -r         match by rank only
         -t         match by recent access only
         -R         reverse listing order
+        -P         list all pinned directories
         -h         show a brief help message
         -[0-9]     select the nth entry
 
     fasd [-A|-D] [paths ...]
         -A    add paths
         -D    delete paths
+
+    fasd [--pin|--unpin] [term] [path]
+        --pin <term> [path]    pin a directory (uses current dir if path omitted)
+        --unpin <term>         unpin a directory term
 
 # Tab Completion
 
