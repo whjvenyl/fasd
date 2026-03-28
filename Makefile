@@ -13,4 +13,7 @@ install:
 	${INSTALLDIR} ${DESTDIR}${BINDIR}
 	${INSTALLBIN} fasd ${DESTDIR}${BINDIR}
 
-.PHONY: all install uninstall
+check:
+	fasd --help
+
+.PHONY: all install uninstall check
