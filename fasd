@@ -28,16 +28,31 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 get_vcs() {
-    local begin_path=$1
-    cd "$begin_path"
+  local begin_path="$1"
+
+  # Execute in a subshell to avoid changing the caller's working directory
+  (
+    # Suppress errors and exit the subshell if the initial path is inaccessible
+    if ! cd "$begin_path" 2>/dev/null; then
+      echo "$begin_path"
+      exit 1
+    fi
+
     while [ "$PWD" != "/" ]; do
-        if { [ -d .git ] || [ -d .hg ] ;} then
-            echo $PWD
-            return
-        fi
-        cd ..
+      if [ -d .git ] || [ -d .hg ]; then
+        echo "$PWD"
+        exit 0
+      fi
+
+      # Break the loop if permissions prevent moving up the directory tree
+      if ! cd .. 2>/dev/null; then
+        break
+      fi
     done
+
+    # Fallback if no VCS directory is found
     echo "$begin_path"
+  )
 }
 
 fasd() {
