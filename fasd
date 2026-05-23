@@ -28,16 +28,34 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 get_vcs() {
-    local begin_path=$1
-    cd "$begin_path"
-    while [ "$PWD" != "/" ]; do
-        if { [ -d .git ] || [ -d .hg ] ;} then
-            echo $PWD
-            return
-        fi
-        cd ..
-    done
-    echo "$begin_path"
+  local begin_path="$1"
+
+  if ! cd -- "$begin_path" >/dev/null 2>&1; then
+    printf '%s\n' "$begin_path"
+    return 1
+  fi
+
+  local prev_dir=""
+  while true; do
+    if [ -e .git ] || [ -d .hg ]; then
+      printf '%s\n' "$PWD"
+      return 0
+    fi
+
+    prev_dir="$PWD"
+    # Break the loop if permissions prevent moving up the directory tree
+    if ! cd .. >/dev/null 2>&1; then
+      break
+    fi
+
+    # Break the loop if the directory did not actually change
+    if [ "$PWD" = "$prev_dir" ]; then
+      break
+    fi
+  done
+
+  # Fallback if no VCS directory is found
+  printf '%s\n' "$begin_path"
 }
 
 fasd() {
