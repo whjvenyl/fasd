@@ -40,6 +40,17 @@ get_vcs() {
     echo "$begin_path"
 }
 
+_fasd_ensure_data_file() {
+    [ "$_FASD_RO" ] && return 1
+
+    if [ -f "$_FASD_DATA" ]; then
+        [ -O "$_FASD_DATA" ] || return 1
+    else
+        mkdir -p "$(dirname "$_FASD_DATA")" 2>> "$_FASD_SINK" || return 1
+        : > "$_FASD_DATA" 2>> "$_FASD_SINK" || return 1
+    fi
+}
+
 fasd() {
 
   # make zsh do word splitting inside this function
@@ -331,7 +342,8 @@ EOS
 
   --proc) shift # process commands
     # stop if we don't own $_FASD_DATA or $_FASD_RO is set
-    [ -f "$_FASD_DATA" -a ! -O "$_FASD_DATA" ] || [ "$_FASD_RO" ] && return
+    [ "$_FASD_RO" ] && return
+    [ -f "$_FASD_DATA" -a ! -O "$_FASD_DATA" ] && return
 
     # blacklists
     local each; for each in $_FASD_BLACKLIST; do
@@ -355,9 +367,6 @@ EOS
     ;;
 
   --add|-A) shift # add entries
-    # stop if we don't own $_FASD_DATA or $_FASD_RO is set
-    [ -f "$_FASD_DATA" -a ! -O "$_FASD_DATA" ] || [ "$_FASD_RO" ] && return
-
     # find all valid path arguments, convert them to simplest absolute form
     local paths="$(while [ "$1" ]; do
       [ -e "$1" ] && printf %s\\n "$1"; shift
@@ -375,6 +384,9 @@ EOS
     [ "$_FASD_TRACK_PWD" = 1 -a "$PWD" != "$HOME" ] && paths="$paths|$pwd"
 
     [ -z "${paths##\|}" ] && return # stop if we have nothing to add
+
+    # stop if we cannot write to $_FASD_DATA or $_FASD_RO is set
+    _fasd_ensure_data_file || return
 
     # maintain the file
     local tempfile
