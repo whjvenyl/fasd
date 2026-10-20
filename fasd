@@ -27,17 +27,18 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# walks up the path string rather than with cd: when fasd is a zsh function, a cd
+# runs the user's chpwd hooks, and their output would end up in the database
 get_vcs() {
-    local begin_path=$1
-    cd "$begin_path"
-    while [ "$PWD" != "/" ]; do
-        if { [ -d .git ] || [ -d .hg ] ;} then
-            echo $PWD
+    local dir="$1"
+    while [ -n "$dir" ] && [ "$dir" != "/" ]; do
+        if { [ -d "$dir/.git" ] || [ -d "$dir/.hg" ] ;} then
+            echo "$dir"
             return
         fi
-        cd ..
+        dir="${dir%/*}"
     done
-    echo "$begin_path"
+    echo "$1"
 }
 
 fasd() {
